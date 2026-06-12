@@ -1,0 +1,36 @@
+# Fly.io configuration
+app = "lanchr-backend"
+primary_region = "ams"  # Amsterdam (closest to Europe)
+
+[build]
+dockerfile = "Dockerfile"
+
+[env]
+PORT = "3000"
+JWT_SECRET = "change_me_to_a_random_secret_in_production"
+SESSION_TTL = "86400"
+DB_FILE = "/data/db.sqlite"
+
+[[mounts]]
+source = "data"
+destination = "/data"
+
+[[services]]
+internal_port = 3000
+processes = ["app"]
+
+[[services.ports]]
+port = 80
+handlers = ["http"]
+force_https = true
+
+[[services.ports]]
+port = 443
+handlers = ["tls", "http"]
+
+[[services.tcp_checks]]
+interval = "10s"
+timeout = "5s"
+grace_period = "5s"
+
+[checks]
