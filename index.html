@@ -174,6 +174,16 @@
     <main class="flex-1 relative bg-[#070b14] flex flex-col z-10">
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-[#070b14] to-[#070b14] z-0 pointer-events-none theme-shift"></div>
 
+        <!-- User Bar -->
+        <div class="relative z-10 px-6 py-3 bg-blue-900/5 border-b border-blue-500/10 flex items-center justify-between">
+            <div class="text-sm text-blue-300">
+                Logged in as <span id="user-display-name" class="font-semibold text-blue-100">User</span>
+            </div>
+            <button onclick="handleLogout()" class="px-3 py-1.5 text-xs bg-red-900/30 hover:bg-red-900/50 text-red-300 rounded-lg border border-red-800/30 transition-all font-medium">
+                Logout
+            </button>
+        </div>
+
         <!-- View: Play Area -->
         <div id="view-play" class="view-section theme-shift relative z-10 flex flex-col items-center justify-center h-full p-8 w-full transition-opacity duration-500">
             <div class="max-w-2xl w-full flex flex-col items-center">
@@ -926,6 +936,194 @@
         function toggleSnow(enabled) {
             snowEnabled = enabled;
             canvas.style.display = enabled ? 'block' : 'none';
+        }
+
+        // =================================================================
+        // AUTH HANDLERS (for auth-screen)
+        // =================================================================
+        async function handleLogin() {
+            const u = document.getElementById('login-username').value.trim();
+            const p = document.getElementById('login-password').value.trim();
+            const err = document.getElementById('login-error');
+            err.classList.add('hidden');
+
+            if (!u || !p) {
+                err.innerText = 'Username and password required';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/login', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const j = await res.json();
+                if (!res.ok) throw new Error(j.error || 'Login failed');
+
+                // Success: hide auth, show app
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-root').classList.remove('hidden');
+                document.getElementById('user-display-name').innerText = j.user.username;
+            } catch (e) {
+                err.innerText = e.message;
+                err.classList.remove('hidden');
+            }
+        }
+
+        async function handleRegister() {
+            const u = document.getElementById('register-username').value.trim();
+            const p = document.getElementById('register-password').value.trim();
+            const pc = document.getElementById('register-confirm').value.trim();
+            const err = document.getElementById('register-error');
+            const succ = document.getElementById('register-success');
+
+            err.classList.add('hidden');
+            succ.classList.add('hidden');
+
+            if (!u || !p || !pc) {
+                err.innerText = 'All fields required';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            if (p !== pc) {
+                err.innerText = 'Passwords do not match';
+                err.classList.remove('hidden');
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/register', {
+                    method: 'POST',
+                    credentials: 'include',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: u, password: p })
+                });
+                const j = await res.json();
+                if (!res.ok) throw new Error(j.error || 'Register failed');
+
+                // Success
+                document.getElementById('auth-screen').classList.add('hidden');
+                document.getElementById('app-root').classList.remove('hidden');
+                document.getElementById('user-display-name').innerText = j.user.username;
+            } catch (e) {
+                err.innerText = e.message;
+                err.classList.remove('hidden');
+            }
+        }
+
+        function handleLogout() {
+            fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            location.reload();
+        }
+
+        function showRegister() {
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('register-card').classList.remove('hidden');
+        }
+
+        function showLogin() {
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
+        }
+
+        // =================================================================
+        // TAB NAVIGATION
+        // =================================================================
+        function switchTab(tabId) {
+            document.querySelectorAll('.view-section').forEach(el => {
+                el.classList.add('hidden');
+                el.classList.remove('flex');
+            });
+            const view = document.getElementById(`view-${tabId}`);
+            if (view) {
+                view.classList.remove('hidden');
+                view.classList.add('flex');
+            }
+
+            document.querySelectorAll('nav button').forEach(el => {
+                el.className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200/80 hover:bg-blue-800/40 hover:text-white font-medium transition-all duration-300';
+            });
+            const activeTab = document.getElementById(`tab-${tabId}`);
+            if (activeTab) {
+                activeTab.className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold transition-all duration-300 shadow-[0_4px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:scale-[1.02]';
+            }
+        }
+
+        // =================================================================
+        // SERVERS
+        // =================================================================
+        function renderServers() {
+            const servers = [
+                { name: "Voidsent MC", votes: 561, ip: "wss://mc.voidsent.net", tags: ["PVP", "PVE", "FACTIONS", "MINIGAMES", "SURVIVAL", "RPG"] },
+                { name: "Pixel Craft", votes: 252, ip: "wss://pcsmp.net", tags: ["PVP", "CREATIVE", "MINIGAMES", "SURVIVAL", "RPG"] },
+                { name: "VanillaMC", votes: 169, ip: "wss://vanillamc.org", tags: ["PVP", "FACTIONS", "SURVIVAL"] },
+                { name: "MercuryMC", votes: 137, ip: "wss://mercurymc.net", tags: ["SURVIVAL", "PVE", "PVP", "FACTIONS"] },
+                { name: "ArchMC", votes: 115, ip: "wss://arch.mc", tags: ["PVP", "MINIGAMES", "SURVIVAL", "CREATIVE", "PRISON"] },
+                { name: "HeartSMP", votes: 72, ip: "wss://play.heartsmp.net", tags: ["PVP", "SURVIVAL", "SKYBLOCK", "PRISON", "RPG"] },
+                { name: "Dumbshit Survival X", votes: 57, ip: "wss://mc.dssx.uk", tags: ["SURVIVAL", "MINIGAMES", "SKYBLOCK"] },
+                { name: "TuffNET", votes: 50, ip: "wss://tuff.ws", tags: ["SURVIVAL", "SKYBLOCK"] }
+            ];
+
+            const grid = document.getElementById('server-grid');
+            if (!grid) return;
+
+            grid.innerHTML = servers.map(s => `
+                <div class="bg-blue-900/10 border border-blue-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-sm flex flex-col hover:border-blue-400/40 transition-colors group">
+                    <div class="flex justify-between items-start mb-3">
+                        <h3 class="text-lg font-bold text-blue-50 group-hover:text-blue-300 transition-colors">${s.name}</h3>
+                        <span class="text-[10px] font-bold text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded-md border border-blue-800/50">${s.votes} votes</span>
+                    </div>
+                    <div class="flex flex-wrap gap-1.5 mb-4">
+                        ${s.tags.map(t => `<span class="text-[9px] font-medium text-blue-300/70 bg-blue-950/30 px-1.5 py-0.5 rounded uppercase border border-blue-800/30">${t}</span>`).join('')}
+                    </div>
+                    <div class="flex gap-2 mt-auto">
+                        <input type="text" readonly value="${s.ip}" class="flex-1 bg-blue-950/50 border border-blue-800/50 rounded-lg px-3 py-2 text-xs text-blue-100 outline-none font-mono">
+                        <button onclick="copyToClipboard('${s.ip}', this)" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-all shadow-md active:scale-95">
+                            <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // =================================================================
+        // THEME
+        // =================================================================
+        function changeTheme(hueValue) {
+            document.documentElement.style.setProperty('--theme-hue', hueValue);
+        }
+
+        // =================================================================
+        // CHECK EXISTING SESSION
+        // =================================================================
+        async function checkExistingSession() {
+            try {
+                const res = await fetch('/api/me', { credentials: 'include' });
+                const j = await res.json();
+                if (j.user) {
+                    // User is logged in
+                    document.getElementById('auth-screen').classList.add('hidden');
+                    document.getElementById('app-root').classList.remove('hidden');
+                    document.getElementById('user-display-name').innerText = j.user.username;
+                }
+            } catch (e) {
+                // Not logged in, auth screen stays visible
+            }
+        }
+
+        // If on GitHub Pages, disable backend features
+        if (location.hostname.endsWith('github.io')) {
+            document.getElementById('chat-input').disabled = true;
+            document.getElementById('chat-send').disabled = true;
+            const notice = document.createElement('div');
+            notice.className = 'p-3 text-sm text-yellow-300 bg-yellow-900/10 border border-yellow-800/20 rounded-md mb-3';
+            notice.innerText = 'Note: Chat is disabled on GitHub Pages. This is a static deployment.';
+            const chatView = document.getElementById('view-chat');
+            if (chatView) chatView.insertBefore(notice, chatView.firstChild);
         }
 
         // =================================================================
