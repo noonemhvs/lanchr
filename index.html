@@ -941,7 +941,16 @@
         // =================================================================
         // AUTH HANDLERS (for auth-screen)
         // =================================================================
+        const isGitHubPages = location.hostname.endsWith('github.io');
+
         async function handleLogin() {
+            if (isGitHubPages) {
+                const err = document.getElementById('login-error');
+                err.innerText = 'Backend is not available on GitHub Pages. Run server locally on port 3000.';
+                err.classList.remove('hidden');
+                return;
+            }
+
             const u = document.getElementById('login-username').value.trim();
             const p = document.getElementById('login-password').value.trim();
             const err = document.getElementById('login-error');
@@ -974,6 +983,13 @@
         }
 
         async function handleRegister() {
+            if (isGitHubPages) {
+                const err = document.getElementById('register-error');
+                err.innerText = 'Backend is not available on GitHub Pages. Run server locally on port 3000.';
+                err.classList.remove('hidden');
+                return;
+            }
+
             const u = document.getElementById('register-username').value.trim();
             const p = document.getElementById('register-password').value.trim();
             const pc = document.getElementById('register-confirm').value.trim();
@@ -1016,7 +1032,7 @@
         }
 
         function handleLogout() {
-            fetch('/api/logout', { method: 'POST', credentials: 'include' });
+            fetch('/api/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
             location.reload();
         }
 
