@@ -4,28 +4,21 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Eaglercraft Web Launcher</title>
-    <!-- Load Tailwind CSS for styling -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Load Three.js for the 3D Snow Parallax Effect -->
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     
     <style>
-        /* Base styles and custom scrollbar */
         body { 
             background-color: #0f172a; 
             color: #f8fafc; 
             overflow: hidden; 
             font-family: 'Inter', system-ui, sans-serif; 
         }
-        
-        /* Glassmorphism for the sidebar */
         .glass-panel { 
             background: rgba(15, 23, 42, 0.7); 
             backdrop-filter: blur(12px); 
             border-right: 1px solid rgba(59, 130, 246, 0.15); 
         }
-        
-        /* Ensure the 3D canvas sits securely behind the sidebar content */
         #snow-canvas { 
             position: absolute; 
             top: 0; 
@@ -35,8 +28,6 @@
             pointer-events: none; 
             z-index: 0; 
         }
-        
-        /* Theming Engine & Animations */
         :root {
             --theme-hue: 0deg;
         }
@@ -48,16 +39,101 @@
             from { opacity: 0; transform: translateY(10px); }
             to { opacity: 1; transform: translateY(0); }
         }
+        .auth-card {
+            animation: fadeIn 0.4s ease-out;
+        }
     </style>
 </head>
-<body class="flex h-screen w-screen selection:bg-blue-500 selection:text-white">
+<body class="h-screen w-screen selection:bg-blue-500 selection:text-white">
+
+    <!-- ===================== AUTH SCREEN ===================== -->
+    <div id="auth-screen" class="fixed inset-0 z-[100] flex items-center justify-center bg-[#070b14]">
+        <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-blue-900/30 via-[#070b14] to-[#070b14]"></div>
+
+        <!-- LOGIN CARD -->
+        <div id="login-card" class="auth-card relative z-10 w-full max-w-sm bg-blue-900/10 border border-blue-500/20 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+            <h2 class="text-2xl font-bold text-white mb-1 text-center">TUFF CLIENT</h2>
+            <p class="text-blue-300/70 text-sm text-center mb-6">Sign in to continue</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-blue-300 mb-1 uppercase tracking-wide">Username</label>
+                    <input id="login-username" type="text" placeholder="Username" autocomplete="username" class="w-full bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-lg px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-blue-600/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-blue-300 mb-1 uppercase tracking-wide">Password</label>
+                    <input id="login-password" type="password" placeholder="Password" autocomplete="current-password" class="w-full bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-lg px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-blue-600/50" onkeypress="if(event.key === 'Enter') handleLogin()">
+                </div>
+
+                <p id="login-error" class="hidden text-red-400 text-xs font-medium"></p>
+
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white rounded-lg py-2.5 font-semibold transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_30px_rgba(59,130,246,0.5)] active:scale-[0.98]">
+                    Log In
+                </button>
+
+                <label class="flex items-center gap-2 text-xs text-blue-300/70 cursor-pointer select-none">
+                    <input type="checkbox" id="remember-me" class="rounded bg-[#0f172a] border-blue-700/50 text-blue-500 focus:ring-blue-400">
+                    Remember me on this device
+                </label>
+            </div>
+
+            <p class="text-center text-sm text-blue-300/70 mt-6">
+                Don't have an account?
+                <button onclick="showRegister()" class="text-blue-400 hover:text-blue-300 font-semibold underline">Register</button>
+            </p>
+        </div>
+
+        <!-- REGISTER CARD -->
+        <div id="register-card" class="auth-card hidden relative z-10 w-full max-w-sm bg-blue-900/10 border border-blue-500/20 rounded-2xl p-8 shadow-2xl backdrop-blur-sm">
+            <h2 class="text-2xl font-bold text-white mb-1 text-center">Create Account</h2>
+            <p class="text-blue-300/70 text-sm text-center mb-6">Join TUFF CLIENT</p>
+
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold text-blue-300 mb-1 uppercase tracking-wide">Username</label>
+                    <input id="register-username" type="text" placeholder="Choose a username" autocomplete="username" class="w-full bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-lg px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-blue-600/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-blue-300 mb-1 uppercase tracking-wide">Password</label>
+                    <input id="register-password" type="password" placeholder="Choose a password" autocomplete="new-password" class="w-full bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-lg px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-blue-600/50">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold text-blue-300 mb-1 uppercase tracking-wide">Confirm Password</label>
+                    <input id="register-confirm" type="password" placeholder="Confirm password" autocomplete="new-password" class="w-full bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-lg px-4 py-2.5 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all placeholder-blue-600/50" onkeypress="if(event.key === 'Enter') handleRegister()">
+                </div>
+
+                <p id="register-error" class="hidden text-red-400 text-xs font-medium"></p>
+                <p id="register-success" class="hidden text-green-400 text-xs font-medium"></p>
+
+                <button onclick="handleRegister()" class="w-full bg-purple-600 hover:bg-purple-500 text-white rounded-lg py-2.5 font-semibold transition-all shadow-[0_0_20px_rgba(147,51,234,0.3)] hover:shadow-[0_0_30px_rgba(168,85,247,0.5)] active:scale-[0.98]">
+                    Create Account
+                </button>
+            </div>
+
+            <p class="text-center text-sm text-blue-300/70 mt-6">
+                Already have an account?
+                <button onclick="showLogin()" class="text-blue-400 hover:text-blue-300 font-semibold underline">Log In</button>
+            </p>
+        </div>
+    </div>
+
+    <!-- ===================== MAIN APP ===================== -->
+    <div id="app-root" class="hidden flex h-screen w-screen">
 
     <aside class="relative w-64 h-full glass-panel flex flex-col z-20 overflow-hidden shadow-[4px_0_24px_rgba(30,58,138,0.3)] theme-shift">
-        <!-- 3D Snow Canvas Container -->
         <canvas id="snow-canvas"></canvas>
 
         <div class="p-6 pb-2 relative z-10">
-        <nav class="flex-1 px-4 py-8 space-y-3 relative z-10 overflow-y-auto">
+            <div class="flex items-center gap-3">
+                <div id="user-avatar" class="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center font-bold text-lg shadow-md">?</div>
+                <div class="overflow-hidden">
+                    <p id="user-display-name" class="font-bold text-white text-sm truncate">Guest</p>
+                    <button onclick="handleLogout()" class="text-[11px] text-blue-400/70 hover:text-blue-300 transition-colors">Log out</button>
+                </div>
+            </div>
+        </div>
+
+        <nav class="flex-1 px-4 py-4 space-y-3 relative z-10 overflow-y-auto">
             <button onclick="switchTab('play')" id="tab-play" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold transition-all duration-300 shadow-[0_4px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:scale-[1.02]">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
                 Play
@@ -85,21 +161,17 @@
     </aside>
 
     <main class="flex-1 relative bg-[#070b14] flex flex-col z-10">
-        <!-- Ambient Background Gradient for Main -->
         <div class="absolute inset-0 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-blue-900/20 via-[#070b14] to-[#070b14] z-0 pointer-events-none theme-shift"></div>
 
         <!-- View: Play Area -->
         <div id="view-play" class="view-section theme-shift relative z-10 flex flex-col items-center justify-center h-full p-8 w-full transition-opacity duration-500">
             <div class="max-w-2xl w-full flex flex-col items-center">
-                <!-- Hero Graphic Placeholder -->
                 <div class="w-full h-64 bg-blue-950/30 border border-blue-500/10 rounded-3xl shadow-2xl mb-10 flex items-center justify-center overflow-hidden relative group">
-                    <!-- Subtle placeholder background -->
                     <div class="absolute inset-0 bg-blue-600/5 mix-blend-overlay"></div>
                     <h2 class="text-4xl font-black text-blue-100/20 tracking-widest absolute">TUFF CLIENT</h2>
                     <div class="absolute inset-0 bg-gradient-to-t from-[#070b14] to-transparent"></div>
                 </div>
 
-                <!-- Launch Button -->
                 <button id="btn-play" class="group relative px-14 py-5 bg-blue-600 hover:bg-blue-500 text-white rounded-2xl text-2xl font-bold tracking-widest transition-all duration-300 hover:-translate-y-1 active:translate-y-0 shadow-[0_0_40px_rgba(37,99,235,0.3)] hover:shadow-[0_0_60px_rgba(59,130,246,0.6)] overflow-hidden">
                     <span class="relative z-10 flex items-center gap-3 drop-shadow-md">
                         <svg class="w-7 h-7" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM9.555 7.168A1 1 0 008 8v4a1 1 0 001.555.832l3-2a1 1 0 000-1.664l-3-2z" clip-rule="evenodd"></path></svg>
@@ -108,7 +180,6 @@
                     <div class="absolute inset-0 bg-gradient-to-r from-blue-400 to-blue-300 opacity-0 group-hover:opacity-20 transition-opacity duration-300"></div>
                 </button>
 
-                <!-- Loading Overlay (hidden by default) -->
                 <div id="loading-overlay" class="hidden w-full max-w-md mt-6 flex-col items-center">
                     <div class="w-full h-3 bg-blue-950/80 rounded-full overflow-hidden mb-3 border border-blue-800/50 shadow-inner">
                         <div id="loading-progress" class="h-full bg-gradient-to-r from-blue-600 to-blue-400 w-0 transition-all duration-300 relative">
@@ -169,7 +240,6 @@
             <h2 class="text-3xl font-bold text-white mb-8 drop-shadow-md">Injection Center</h2>
             
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-4xl">
-                <!-- Custom Client Box -->
                 <div class="bg-blue-900/10 border border-blue-500/20 rounded-2xl p-6 shadow-2xl backdrop-blur-sm flex flex-col">
                     <div class="mb-4">
                         <h3 class="text-xl font-bold text-blue-100 flex items-center gap-2">
@@ -189,7 +259,6 @@
                     <p id="client-file-name" class="text-xs text-blue-300/60 mt-2 truncate text-center h-4"></p>
                 </div>
 
-                <!-- Mod Injection Box -->
                 <div class="bg-blue-900/10 border border-blue-500/20 rounded-2xl p-6 shadow-2xl backdrop-blur-sm flex flex-col">
                     <div class="mb-4">
                         <h3 class="text-xl font-bold text-blue-100 flex items-center gap-2">
@@ -210,7 +279,6 @@
                 </div>
             </div>
 
-            <!-- Custom Launch Button -->
             <div class="mt-8 flex flex-col items-center max-w-4xl">
                 <button onclick="launchInjectedGame()" class="group relative px-10 py-4 bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-500 hover:to-purple-500 text-white rounded-xl text-xl font-bold tracking-widest transition-all duration-300 hover:-translate-y-1 shadow-[0_0_30px_rgba(99,102,241,0.3)] hover:shadow-[0_0_50px_rgba(139,92,246,0.5)] overflow-hidden w-full md:w-auto min-w-[300px]">
                     <span class="relative z-10 flex items-center justify-center gap-3 drop-shadow-md">
@@ -219,7 +287,6 @@
                     </span>
                 </button>
                 
-                <!-- Injection Loading State -->
                 <div id="inject-loading" class="hidden w-full max-w-md mt-6 flex-col items-center">
                     <div class="w-full h-2 bg-blue-950/80 rounded-full overflow-hidden mb-2 border border-blue-800/50">
                         <div id="inject-progress" class="h-full bg-gradient-to-r from-blue-500 to-purple-500 w-0 transition-all duration-300"></div>
@@ -238,52 +305,13 @@
                 </div>
             </div>
             
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <!-- Server Grid -->
-                <script>
-                    const servers = [
-                        { name: "Voidsent MC", votes: 561, ip: "wss://mc.voidsent.net", tags: ["PVP", "PVE", "FACTIONS", "MINIGAMES", "SURVIVAL", "RPG"] },
-                        { name: "Pixel Craft", votes: 252, ip: "wss://pcsmp.net", tags: ["PVP", "CREATIVE", "MINIGAMES", "SURVIVAL", "RPG"] },
-                        { name: "VanillaMC", votes: 169, ip: "wss://vanillamc.org", tags: ["PVP", "FACTIONS", "SURVIVAL"] },
-                        { name: "MercuryMC", votes: 137, ip: "wss://mercurymc.net", tags: ["SURVIVAL", "PVE", "PVP", "FACTIONS"] },
-                        { name: "ArchMC", votes: 115, ip: "wss://arch.mc", tags: ["PVP", "MINIGAMES", "SURVIVAL", "CREATIVE", "PRISON"] },
-                        { name: "HeartSMP", votes: 72, ip: "wss://play.heartsmp.net", tags: ["PVP", "SURVIVAL", "SKYBLOCK", "PRISON", "RPG"] },
-                        { name: "Dumbshit Survival X", votes: 57, ip: "wss://mc.dssx.uk", tags: ["SURVIVAL", "MINIGAMES", "SKYBLOCK"] },
-                        { name: "TuffNET", votes: 50, ip: "wss://tuff.ws", tags: ["SURVIVAL", "SKYBLOCK"] },
-                        { name: "Default Survival", votes: 14, ip: "wss://default-survival.eagler.host", tags: ["PVP", "SURVIVAL"] },
-                        { name: "null's World", votes: 12, ip: "wss://mc.nullsworld.net", tags: ["PVP", "MINIGAMES", "SURVIVAL", "CREATIVE", "RPG"] }
-                    ];
-                    
-                    document.write(`
-                        ${servers.map(s => `
-                            <div class="bg-blue-900/10 border border-blue-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-sm flex flex-col hover:border-blue-400/40 transition-colors group">
-                                <div class="flex justify-between items-start mb-3">
-                                    <h3 class="text-lg font-bold text-blue-50 group-hover:text-blue-300 transition-colors">${s.name}</h3>
-                                    <span class="text-[10px] font-bold text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded-md border border-blue-800/50">
-                                        ${s.votes} votes
-                                    </span>
-                                </div>
-                                <div class="flex flex-wrap gap-1.5 mb-4">
-                                    ${s.tags.map(t => `<span class="text-[9px] font-medium text-blue-300/70 bg-blue-950/30 px-1.5 py-0.5 rounded uppercase border border-blue-800/30">${t}</span>`).join('')}
-                                </div>
-                                <div class="flex gap-2 mt-auto">
-                                    <input type="text" readonly value="${s.ip}" class="flex-1 bg-blue-950/50 border border-blue-800/50 rounded-lg px-3 py-2 text-xs text-blue-100 outline-none font-mono selection:bg-blue-600">
-                                    <button onclick="copyToClipboard('${s.ip}', this)" class="bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-all shadow-md active:scale-95 flex items-center justify-center">
-                                        <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>
-                                    </button>
-                                </div>
-                            </div>
-                        `).join('')}
-                    `);
-                </script>
-            </div>
+            <div id="server-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6"></div>
         </div>
 
         <!-- View: Chat -->
         <div id="view-chat" class="view-section hidden theme-shift relative z-10 flex flex-col h-full p-6 w-full max-w-4xl mx-auto">
             <h2 class="text-2xl font-bold text-white mb-4 drop-shadow-md">Global Chat</h2>
             <div class="flex-1 bg-blue-950/30 border border-blue-500/20 rounded-t-2xl shadow-inner overflow-hidden flex flex-col backdrop-blur-sm">
-                <!-- Chat Messages Area -->
                 <div id="chat-messages" class="flex-1 p-4 overflow-y-auto space-y-4 flex flex-col scroll-smooth">
                     <div class="text-center text-xs text-blue-400/50 mb-2">Welcome to the Global Lobby! Say hi.</div>
                     
@@ -311,7 +339,6 @@
                 </div>
             </div>
             
-            <!-- Chat Input Area -->
             <div class="bg-blue-900/40 border-x border-b border-blue-500/20 rounded-b-2xl p-3 flex gap-2 backdrop-blur-sm">
                 <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-xl px-4 py-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all text-sm placeholder-blue-600/50" onkeypress="if(event.key === 'Enter') sendChatMessage()">
                 <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95 flex items-center gap-2">
@@ -341,100 +368,363 @@
             <iframe id="game-frame" class="w-full flex-1 border-none bg-black" allowfullscreen></iframe>
         </div>
     </main>
+    </div> <!-- /#app-root -->
 
     <script>
-        // --- Tab Navigation Logic ---
+        // =================================================================
+        // AUTH SYSTEM (local, browser-only storage)
+        // =================================================================
+        const USERS_KEY = 'tuff_users';
+        const SESSION_KEY = 'tuff_session';
+
+        function loadUsers() {
+            try {
+                return JSON.parse(localStorage.getItem(USERS_KEY)) || {};
+            } catch {
+                return {};
+            }
+        }
+
+        function saveUsers(users) {
+            localStorage.setItem(USERS_KEY, JSON.stringify(users));
+        }
+
+        // Simple hash so we don't store plaintext passwords (NOT cryptographically secure,
+        // fine for a local offline launcher with no real backend)
+        async function hashPassword(password) {
+            const enc = new TextEncoder().encode(password);
+            const buf = await crypto.subtle.digest('SHA-256', enc);
+            return Array.from(new Uint8Array(buf)).map(b => b.toString(16).padStart(2, '0')).join('');
+        }
+
+        function showLogin() {
+            document.getElementById('register-card').classList.add('hidden');
+            document.getElementById('login-card').classList.remove('hidden');
+            clearAuthMessages();
+        }
+
+        function showRegister() {
+            document.getElementById('login-card').classList.add('hidden');
+            document.getElementById('register-card').classList.remove('hidden');
+            clearAuthMessages();
+        }
+
+        function clearAuthMessages() {
+            ['login-error', 'register-error', 'register-success'].forEach(id => {
+                const el = document.getElementById(id);
+                el.classList.add('hidden');
+                el.innerText = '';
+            });
+        }
+
+        function showError(id, msg) {
+            const el = document.getElementById(id);
+            el.innerText = msg;
+            el.classList.remove('hidden');
+        }
+
+        async function handleRegister() {
+            clearAuthMessages();
+            const username = document.getElementById('register-username').value.trim();
+            const password = document.getElementById('register-password').value;
+            const confirm = document.getElementById('register-confirm').value;
+
+            if (!username || !password) {
+                showError('register-error', 'Please fill out all fields.');
+                return;
+            }
+            if (!/^[a-zA-Z0-9_]{3,16}$/.test(username)) {
+                showError('register-error', 'Username must be 3-16 chars (letters, numbers, underscore).');
+                return;
+            }
+            if (password.length < 4) {
+                showError('register-error', 'Password must be at least 4 characters.');
+                return;
+            }
+            if (password !== confirm) {
+                showError('register-error', 'Passwords do not match.');
+                return;
+            }
+
+            const users = loadUsers();
+            const key = username.toLowerCase();
+            if (users[key]) {
+                showError('register-error', 'That username is already taken.');
+                return;
+            }
+
+            const passwordHash = await hashPassword(password);
+            users[key] = { username, passwordHash };
+            saveUsers(users);
+
+            const successEl = document.getElementById('register-success');
+            successEl.innerText = 'Account created! You can now log in.';
+            successEl.classList.remove('hidden');
+
+            // Pre-fill login form and switch to it
+            document.getElementById('login-username').value = username;
+            document.getElementById('login-password').value = '';
+            setTimeout(showLogin, 900);
+        }
+
+        async function handleLogin() {
+            clearAuthMessages();
+            const username = document.getElementById('login-username').value.trim();
+            const password = document.getElementById('login-password').value;
+            const remember = document.getElementById('remember-me').checked;
+
+            if (!username || !password) {
+                showError('login-error', 'Please enter your username and password.');
+                return;
+            }
+
+            const users = loadUsers();
+            const key = username.toLowerCase();
+            const account = users[key];
+
+            if (!account) {
+                showError('login-error', 'No account found with that username.');
+                return;
+            }
+
+            const passwordHash = await hashPassword(password);
+            if (passwordHash !== account.passwordHash) {
+                showError('login-error', 'Incorrect password.');
+                return;
+            }
+
+            const session = { username: account.username };
+            if (remember) {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            } else {
+                sessionStorage.setItem(SESSION_KEY, JSON.stringify(session));
+            }
+
+            enterApp(account.username);
+        }
+
+        function handleLogout() {
+            localStorage.removeItem(SESSION_KEY);
+            sessionStorage.removeItem(SESSION_KEY);
+
+            // Reset to login screen
+            document.getElementById('app-root').classList.add('hidden');
+            document.getElementById('app-root').classList.remove('flex');
+            document.getElementById('auth-screen').classList.remove('hidden');
+            document.getElementById('login-username').value = '';
+            document.getElementById('login-password').value = '';
+            showLogin();
+
+            // If a game is running, exit it
+            if (!document.getElementById('view-game').classList.contains('hidden')) {
+                exitGame();
+            }
+        }
+
+        function enterApp(username) {
+            document.getElementById('auth-screen').classList.add('hidden');
+            const root = document.getElementById('app-root');
+            root.classList.remove('hidden');
+            root.classList.add('flex');
+
+            document.getElementById('user-display-name').innerText = username;
+            document.getElementById('user-avatar').innerText = username.charAt(0).toUpperCase();
+
+            // Snow canvas needs sizing after it becomes visible
+            requestAnimationFrame(resizeCanvas);
+        }
+
+        function checkExistingSession() {
+            let raw = localStorage.getItem(SESSION_KEY) || sessionStorage.getItem(SESSION_KEY);
+            if (!raw) return;
+            try {
+                const session = JSON.parse(raw);
+                if (session && session.username) {
+                    enterApp(session.username);
+                }
+            } catch {
+                localStorage.removeItem(SESSION_KEY);
+                sessionStorage.removeItem(SESSION_KEY);
+            }
+        }
+
+        // =================================================================
+        // TAB NAVIGATION
+        // =================================================================
         function switchTab(tabId) {
-            // Hide all views
             document.querySelectorAll('.view-section').forEach(el => {
                 el.classList.add('hidden');
                 el.classList.remove('flex');
             });
-            // Show selected view
             const view = document.getElementById(`view-${tabId}`);
-            if(view) {
+            if (view) {
                 view.classList.remove('hidden');
                 view.classList.add('flex');
             }
-            
-            // Update Navigation Button Styles
+
             document.querySelectorAll('nav button').forEach(el => {
                 el.className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl text-blue-200/80 hover:bg-blue-800/40 hover:text-white font-medium transition-all duration-300';
             });
             const activeTab = document.getElementById(`tab-${tabId}`);
-            if(activeTab) {
+            if (activeTab) {
                 activeTab.className = 'w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold transition-all duration-300 shadow-[0_4px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:scale-[1.02]';
             }
         }
 
-        // --- Theme Engine Logic ---
+        // =================================================================
+        // THEME ENGINE
+        // =================================================================
         function changeTheme(hueValue) {
             document.documentElement.style.setProperty('--theme-hue', hueValue);
         }
 
-        // --- Server Copy Logic ---
+        // =================================================================
+        // SERVER LIST (rendered safely, no document.write / innerHTML injection)
+        // =================================================================
+        const servers = [
+            { name: "Voidsent MC", votes: 561, ip: "wss://mc.voidsent.net", tags: ["PVP", "PVE", "FACTIONS", "MINIGAMES", "SURVIVAL", "RPG"] },
+            { name: "Pixel Craft", votes: 252, ip: "wss://pcsmp.net", tags: ["PVP", "CREATIVE", "MINIGAMES", "SURVIVAL", "RPG"] },
+            { name: "VanillaMC", votes: 169, ip: "wss://vanillamc.org", tags: ["PVP", "FACTIONS", "SURVIVAL"] },
+            { name: "MercuryMC", votes: 137, ip: "wss://mercurymc.net", tags: ["SURVIVAL", "PVE", "PVP", "FACTIONS"] },
+            { name: "ArchMC", votes: 115, ip: "wss://arch.mc", tags: ["PVP", "MINIGAMES", "SURVIVAL", "CREATIVE", "PRISON"] },
+            { name: "HeartSMP", votes: 72, ip: "wss://play.heartsmp.net", tags: ["PVP", "SURVIVAL", "SKYBLOCK", "PRISON", "RPG"] },
+            { name: "Dumbshit Survival X", votes: 57, ip: "wss://mc.dssx.uk", tags: ["SURVIVAL", "MINIGAMES", "SKYBLOCK"] },
+            { name: "TuffNET", votes: 50, ip: "wss://tuff.ws", tags: ["SURVIVAL", "SKYBLOCK"] },
+            { name: "Default Survival", votes: 14, ip: "wss://default-survival.eagler.host", tags: ["PVP", "SURVIVAL"] },
+            { name: "null's World", votes: 12, ip: "wss://mc.nullsworld.net", tags: ["PVP", "MINIGAMES", "SURVIVAL", "CREATIVE", "RPG"] }
+        ];
+
+        function renderServers() {
+            const grid = document.getElementById('server-grid');
+            grid.innerHTML = '';
+            servers.forEach(s => {
+                const card = document.createElement('div');
+                card.className = 'bg-blue-900/10 border border-blue-500/20 rounded-2xl p-5 shadow-lg backdrop-blur-sm flex flex-col hover:border-blue-400/40 transition-colors group';
+
+                const header = document.createElement('div');
+                header.className = 'flex justify-between items-start mb-3';
+
+                const title = document.createElement('h3');
+                title.className = 'text-lg font-bold text-blue-50 group-hover:text-blue-300 transition-colors';
+                title.textContent = s.name;
+
+                const votes = document.createElement('span');
+                votes.className = 'text-[10px] font-bold text-blue-400 bg-blue-900/50 px-2 py-0.5 rounded-md border border-blue-800/50';
+                votes.textContent = `${s.votes} votes`;
+
+                header.append(title, votes);
+
+                const tagsWrap = document.createElement('div');
+                tagsWrap.className = 'flex flex-wrap gap-1.5 mb-4';
+                s.tags.forEach(t => {
+                    const tag = document.createElement('span');
+                    tag.className = 'text-[9px] font-medium text-blue-300/70 bg-blue-950/30 px-1.5 py-0.5 rounded uppercase border border-blue-800/30';
+                    tag.textContent = t;
+                    tagsWrap.appendChild(tag);
+                });
+
+                const ipRow = document.createElement('div');
+                ipRow.className = 'flex gap-2 mt-auto';
+
+                const ipInput = document.createElement('input');
+                ipInput.type = 'text';
+                ipInput.readOnly = true;
+                ipInput.value = s.ip;
+                ipInput.className = 'flex-1 bg-blue-950/50 border border-blue-800/50 rounded-lg px-3 py-2 text-xs text-blue-100 outline-none font-mono selection:bg-blue-600';
+
+                const copyBtn = document.createElement('button');
+                copyBtn.className = 'bg-blue-600 hover:bg-blue-500 text-white px-3 py-1 rounded-lg text-xs font-semibold transition-all shadow-md active:scale-95 flex items-center justify-center';
+                copyBtn.innerHTML = `<svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z"></path></svg>`;
+                copyBtn.addEventListener('click', () => copyToClipboard(s.ip, copyBtn));
+
+                ipRow.append(ipInput, copyBtn);
+                card.append(header, tagsWrap, ipRow);
+                grid.appendChild(card);
+            });
+        }
+
+        // =================================================================
+        // SERVER COPY
+        // =================================================================
         function copyToClipboard(text, btn) {
-            const el = document.createElement('textarea');
-            el.value = text;
-            document.body.appendChild(el);
-            el.select();
-            document.execCommand('copy');
-            document.body.removeChild(el);
-            
-            const originalText = btn.innerHTML;
-            btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg> Copied!`;
+            const fallbackCopy = () => {
+                const el = document.createElement('textarea');
+                el.value = text;
+                el.style.position = 'fixed';
+                el.style.opacity = '0';
+                document.body.appendChild(el);
+                el.select();
+                try { document.execCommand('copy'); } catch (e) {}
+                document.body.removeChild(el);
+            };
+
+            if (navigator.clipboard && navigator.clipboard.writeText) {
+                navigator.clipboard.writeText(text).catch(fallbackCopy);
+            } else {
+                fallbackCopy();
+            }
+
+            const originalHTML = btn.innerHTML;
+            btn.innerHTML = `<svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path></svg>`;
             btn.classList.add('bg-green-500', 'hover:bg-green-400');
             btn.classList.remove('bg-blue-600', 'hover:bg-blue-500');
-            
+
             setTimeout(() => {
-                btn.innerHTML = originalText;
+                btn.innerHTML = originalHTML;
                 btn.classList.remove('bg-green-500', 'hover:bg-green-400');
                 btn.classList.add('bg-blue-600', 'hover:bg-blue-500');
             }, 2000);
         }
 
-        // --- Chat Logic ---
+        // =================================================================
+        // CHAT
+        // =================================================================
         function sendChatMessage() {
             const input = document.getElementById('chat-input');
             const message = input.value.trim();
-            if(!message) return;
-            
+            if (!message) return;
+
             const chatContainer = document.getElementById('chat-messages');
-            
+            const username = document.getElementById('user-display-name').innerText || 'You';
+
             const msgDiv = document.createElement('div');
             msgDiv.className = 'flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]';
-            msgDiv.innerHTML = `
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center font-bold text-sm shadow-md text-white">Y</div>
-                <div>
-                    <div class="flex items-baseline gap-2">
-                        <span class="font-bold text-green-200 text-sm">You</span>
-                        <span class="text-[10px] text-blue-400/60">Just now</span>
-                    </div>
-                    <p class="text-blue-100 text-sm mt-0.5 bg-blue-800/50 p-2 rounded-r-lg rounded-bl-lg border border-blue-500/20">${escapeHTML(message)}</p>
-                </div>
-            `;
-            
+
+            const avatar = document.createElement('div');
+            avatar.className = 'w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center font-bold text-sm shadow-md text-white';
+            avatar.textContent = username.charAt(0).toUpperCase();
+
+            const body = document.createElement('div');
+
+            const meta = document.createElement('div');
+            meta.className = 'flex items-baseline gap-2';
+            meta.innerHTML = `<span class="font-bold text-green-200 text-sm"></span><span class="text-[10px] text-blue-400/60">Just now</span>`;
+            meta.querySelector('span').textContent = username;
+
+            const bubble = document.createElement('p');
+            bubble.className = 'text-blue-100 text-sm mt-0.5 bg-blue-800/50 p-2 rounded-r-lg rounded-bl-lg border border-blue-500/20';
+            bubble.textContent = message; // textContent avoids any HTML injection
+
+            body.append(meta, bubble);
+            msgDiv.append(avatar, body);
+
             chatContainer.appendChild(msgDiv);
             chatContainer.scrollTop = chatContainer.scrollHeight;
             input.value = '';
         }
-        
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag]));
-        }
 
-        // --- Fullscreen Logic ---
+        // =================================================================
+        // FULLSCREEN
+        // =================================================================
         function toggleFullscreen() {
-            const gameFrame = document.getElementById('view-game');
+            const gameView = document.getElementById('view-game');
             if (!document.fullscreenElement) {
-                if (gameFrame.requestFullscreen) {
-                    gameFrame.requestFullscreen();
-                } else if (gameFrame.webkitRequestFullscreen) {
-                    gameFrame.webkitRequestFullscreen();
-                } else if (gameFrame.msRequestFullscreen) {
-                    gameFrame.msRequestFullscreen();
+                if (gameView.requestFullscreen) {
+                    gameView.requestFullscreen();
+                } else if (gameView.webkitRequestFullscreen) {
+                    gameView.webkitRequestFullscreen();
+                } else if (gameView.msRequestFullscreen) {
+                    gameView.msRequestFullscreen();
                 }
             } else {
                 if (document.exitFullscreen) {
@@ -443,19 +733,19 @@
             }
         }
 
-        // --- Launch Game Logic ---
+        // =================================================================
+        // LAUNCH (DEFAULT CLIENT)
+        // =================================================================
         document.getElementById('btn-play').addEventListener('click', () => {
             const btn = document.getElementById('btn-play');
             const overlay = document.getElementById('loading-overlay');
             const progress = document.getElementById('loading-progress');
             const text = document.getElementById('loading-text');
 
-            // Swap UI
             btn.classList.add('hidden');
             overlay.classList.remove('hidden');
             overlay.classList.add('flex');
 
-            // Fake loading steps
             const steps = [
                 { p: 15, t: "Verifying assets..." },
                 { p: 40, t: "Unpacking natives..." },
@@ -466,14 +756,15 @@
 
             let stepIdx = 0;
             const interval = setInterval(() => {
-                if(stepIdx >= steps.length) {
+                if (stepIdx >= steps.length) {
                     clearInterval(interval);
                     setTimeout(() => {
-                        // Enter game mode
                         document.getElementById('view-play').classList.add('hidden');
-                        document.getElementById('view-game').classList.remove('hidden');
-                        // Load the HTML file
-                        document.getElementById('game-frame').src = 'Tuff_Client_International_Offline.html'; 
+                        document.getElementById('view-play').classList.remove('flex');
+                        const gameView = document.getElementById('view-game');
+                        gameView.classList.remove('hidden');
+                        gameView.classList.add('flex');
+                        document.getElementById('game-frame').src = 'Tuff_Client_International_Offline.html';
                     }, 500);
                     return;
                 }
@@ -484,37 +775,35 @@
         });
 
         function exitGame() {
-            // Unload game
-            document.getElementById('view-game').classList.add('hidden');
+            const gameView = document.getElementById('view-game');
+            gameView.classList.add('hidden');
+            gameView.classList.remove('flex');
             document.getElementById('game-frame').src = '';
-            
-            // Restore Launcher UI
-            document.getElementById('view-play').classList.remove('hidden');
-            document.getElementById('view-play').classList.add('flex');
+
+            const playView = document.getElementById('view-play');
+            playView.classList.remove('hidden');
+            playView.classList.add('flex');
             document.getElementById('btn-play').classList.remove('hidden');
-            
+
             const overlay = document.getElementById('loading-overlay');
             overlay.classList.add('hidden');
             overlay.classList.remove('flex');
             document.getElementById('loading-progress').style.width = '0%';
         }
 
-        // --- Injection & Modding Logic ---
-        
+        // =================================================================
+        // INJECTION & MODDING
+        // =================================================================
         function updateFileName(inputId, textId) {
             const input = document.getElementById(inputId);
             const text = document.getElementById(textId);
-            if(input.files && input.files.length > 0) {
-                text.innerText = input.files[0].name;
-            } else {
-                text.innerText = "";
-            }
+            text.innerText = (input.files && input.files.length > 0) ? input.files[0].name : "";
         }
 
         function updateModFilesName() {
             const input = document.getElementById('mod-files-upload');
             const text = document.getElementById('mod-files-name');
-            if(input.files && input.files.length > 0) {
+            if (input.files && input.files.length > 0) {
                 text.innerText = input.files.length === 1 ? input.files[0].name : `${input.files.length} mods selected`;
             } else {
                 text.innerText = "";
@@ -524,12 +813,11 @@
         async function launchInjectedGame() {
             const clientInput = document.getElementById('custom-client-upload');
             const modInput = document.getElementById('mod-files-upload');
-            
+
             const injectLoading = document.getElementById('inject-loading');
             const injectProgress = document.getElementById('inject-progress');
             const injectText = document.getElementById('inject-text');
-            
-            // Check if client is provided
+
             if (!clientInput.files || clientInput.files.length === 0) {
                 injectText.innerText = "Error: Please upload a Base Client (.html) first.";
                 injectText.classList.remove('text-blue-300');
@@ -538,8 +826,7 @@
                 injectLoading.classList.add('flex');
                 return;
             }
-            
-            // Reset UI states
+
             injectText.classList.remove('text-red-400');
             injectText.classList.add('text-blue-300');
             injectLoading.classList.remove('hidden');
@@ -550,10 +837,9 @@
             try {
                 const clientFile = clientInput.files[0];
                 let htmlContent = await clientFile.text();
-                
+
                 injectProgress.style.width = '40%';
-                
-                // Inject Mods if any are selected
+
                 if (modInput.files && modInput.files.length > 0) {
                     injectText.innerText = 'Compiling mods...';
                     let combinedMods = "";
@@ -561,38 +847,37 @@
                         const modCode = await modInput.files[i].text();
                         combinedMods += `\n/* Mod: ${modInput.files[i].name} */\n${modCode}\n`;
                     }
-                    
+
                     injectProgress.style.width = '70%';
                     injectText.innerText = 'Injecting scripts into engine...';
-                    
-                    // Safely embed scripts before the closing head tag, or fallback to end of file
+
                     const injectionTag = `\n<script>\n// --- INJECTED MODS START ---\n${combinedMods}\n// --- INJECTED MODS END ---\n<\/script>\n`;
-                    
+
                     if (htmlContent.includes('</head>')) {
                         htmlContent = htmlContent.replace('</head>', `${injectionTag}</head>`);
                     } else {
-                        htmlContent += injectionTag; 
+                        htmlContent += injectionTag;
                     }
                 }
-                
+
                 injectProgress.style.width = '90%';
                 injectText.innerText = 'Creating virtual environment...';
-                
-                // Package final modified HTML into a Blob URL to bypass local iframe restrictions
+
                 const blob = new Blob([htmlContent], { type: 'text/html' });
                 const blobUrl = URL.createObjectURL(blob);
-                
+
                 setTimeout(() => {
                     injectProgress.style.width = '100%';
                     injectText.innerText = 'Launching Injected Client...';
-                    
+
                     setTimeout(() => {
-                        // Switch Views
                         document.getElementById('view-inject').classList.add('hidden');
-                        document.getElementById('view-game').classList.remove('hidden');
+                        document.getElementById('view-inject').classList.remove('flex');
+                        const gameView = document.getElementById('view-game');
+                        gameView.classList.remove('hidden');
+                        gameView.classList.add('flex');
                         document.getElementById('game-frame').src = blobUrl;
-                        
-                        // Reset progress bar in background
+
                         setTimeout(() => {
                             injectLoading.classList.add('hidden');
                             injectLoading.classList.remove('flex');
@@ -608,71 +893,65 @@
             }
         }
 
-        // --- 3D Snow Parallax Effect (Three.js) ---
+        // =================================================================
+        // 3D SNOW PARALLAX (Three.js)
+        // =================================================================
         let snowEnabled = true;
         const canvas = document.getElementById('snow-canvas');
         const sidebar = canvas.parentElement;
-        
-        // Setup Scene & Camera
+
         const scene = new THREE.Scene();
-        // Camera aspect matches the sidebar dimensions
-        const camera = new THREE.PerspectiveCamera(60, sidebar.clientWidth / sidebar.clientHeight, 0.1, 1000);
-        
-        const renderer = new THREE.WebGLRenderer({ 
-            canvas: canvas, 
-            alpha: true, 
-            antialias: true 
+        const camera = new THREE.PerspectiveCamera(60, Math.max(sidebar.clientWidth, 1) / Math.max(sidebar.clientHeight, 1), 0.1, 1000);
+
+        const renderer = new THREE.WebGLRenderer({
+            canvas: canvas,
+            alpha: true,
+            antialias: true
         });
-        
+
         function resizeCanvas() {
             const width = sidebar.clientWidth;
             const height = sidebar.clientHeight;
-            if(width === 0 || height === 0) return;
+            if (width === 0 || height === 0) return;
             renderer.setSize(width, height);
             renderer.setPixelRatio(window.devicePixelRatio);
             camera.aspect = width / height;
             camera.updateProjectionMatrix();
         }
-        
-        // Initial setup and listener
+
         resizeCanvas();
         window.addEventListener('resize', resizeCanvas);
 
-        // Create Particles (Snowflakes)
-        const particleCount = 800; // Optimal amount for subtle density
+        const particleCount = 800;
         const geometry = new THREE.BufferGeometry();
         const positions = new Float32Array(particleCount * 3);
         const velocities = [];
 
-        // Spread particles within a 3D box
-        for(let i = 0; i < particleCount; i++) {
-            positions[i*3] = (Math.random() - 0.5) * 15;     // X width
-            positions[i*3+1] = (Math.random() - 0.5) * 15;   // Y height
-            positions[i*3+2] = (Math.random() - 0.5) * 10;   // Z depth
-            
-            // Individual speeds
+        for (let i = 0; i < particleCount; i++) {
+            positions[i*3] = (Math.random() - 0.5) * 15;
+            positions[i*3+1] = (Math.random() - 0.5) * 15;
+            positions[i*3+2] = (Math.random() - 0.5) * 10;
+
             velocities.push({
-                y: - (Math.random() * 0.015 + 0.005),
+                y: -(Math.random() * 0.015 + 0.005),
                 x: (Math.random() - 0.5) * 0.005
             });
         }
 
         geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-        
-        // Generate a smooth circular texture programmatically
+
         const textureCanvas = document.createElement('canvas');
         const ctx = textureCanvas.getContext('2d');
-        textureCanvas.width = 32; 
+        textureCanvas.width = 32;
         textureCanvas.height = 32;
-        
-        // Draw soft glowing circle
+
         const gradient = ctx.createRadialGradient(16, 16, 0, 16, 16, 16);
         gradient.addColorStop(0, 'rgba(255, 255, 255, 1)');
         gradient.addColorStop(0.2, 'rgba(255, 255, 255, 0.8)');
         gradient.addColorStop(1, 'rgba(255, 255, 255, 0)');
         ctx.fillStyle = gradient;
         ctx.fillRect(0, 0, 32, 32);
-        
+
         const texture = new THREE.CanvasTexture(textureCanvas);
 
         const material = new THREE.PointsMaterial({
@@ -682,43 +961,36 @@
             opacity: 0.6,
             depthWrite: false,
             blending: THREE.AdditiveBlending,
-            color: 0xaaddff // Slight blue tint to the snow
+            color: 0xaaddff
         });
 
         const particles = new THREE.Points(geometry, material);
         scene.add(particles);
 
-        // Move camera back to see the particles
         camera.position.z = 4;
 
-        // Mouse Parallax Tracking
         let mouseX = 0;
         let mouseY = 0;
         let targetX = 0;
         let targetY = 0;
-        
-        // Listen to mouse movement over the whole document for a global effect
+
         document.addEventListener('mousemove', (event) => {
-            if(!snowEnabled) return;
-            // Normalize mouse coordinates from center of screen
+            if (!snowEnabled) return;
             mouseX = (event.clientX - (window.innerWidth / 2));
             mouseY = (event.clientY - (window.innerHeight / 2));
         });
 
-        // Animation Loop
         function animateSnow() {
             requestAnimationFrame(animateSnow);
-            
-            if(!snowEnabled) return;
+
+            if (!snowEnabled) return;
 
             const positions = particles.geometry.attributes.position.array;
-            
-            for(let i = 0; i < particleCount; i++) {
-                // Apply velocities
-                positions[i*3+1] += velocities[i].y; // Falling down
-                positions[i*3] += velocities[i].x;   // Drifting sideways
 
-                // Loop particles back to top when they fall off screen
+            for (let i = 0; i < particleCount; i++) {
+                positions[i*3+1] += velocities[i].y;
+                positions[i*3] += velocities[i].x;
+
                 if (positions[i*3+1] < -7) {
                     positions[i*3+1] = 7;
                     positions[i*3] = (Math.random() - 0.5) * 15;
@@ -726,31 +998,28 @@
             }
             particles.geometry.attributes.position.needsUpdate = true;
 
-            // Calculate subtle parallax target rotation/position
-            // Smaller multiplier = more subtle parallax
             targetX = mouseX * 0.0003;
             targetY = mouseY * 0.0003;
-            
-            // Easing function for smooth camera movement
+
             camera.position.x += (targetX - camera.position.x) * 0.05;
             camera.position.y += (-targetY - camera.position.y) * 0.05;
             camera.lookAt(scene.position);
 
             renderer.render(scene, camera);
         }
-        
-        // Start animation
+
         animateSnow();
 
-        // Toggle handler for settings
         function toggleSnow(enabled) {
             snowEnabled = enabled;
-            if(enabled) {
-                canvas.style.display = 'block';
-            } else {
-                canvas.style.display = 'none';
-            }
+            canvas.style.display = enabled ? 'block' : 'none';
         }
+
+        // =================================================================
+        // INIT
+        // =================================================================
+        renderServers();
+        checkExistingSession();
     </script>
 </body>
 </html>
