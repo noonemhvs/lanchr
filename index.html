@@ -392,7 +392,14 @@
     </div> <!-- /#app-root -->
 
     <script>
-        // If served from GitHub Pages, backend features (chat/auth) are unavailable.
+        // =========== API CONFIGURATION ===========
+        // Detect if running on GitHub Pages or locally
+        const isGitHubPages = location.hostname.endsWith('github.io');
+        const API_BASE_URL = isGitHubPages 
+            ? 'https://lanchr-backend.onrender.com'  // Will be set after deployment
+            : 'http://localhost:3000';
+
+        // If served from GitHub Pages, backend features (chat/auth) are unavailable until backend is deployed.
         if (location.hostname.endsWith('github.io')) {
             // Disable chat input and show notice
             window.addEventListener('load', () => {
@@ -559,13 +566,13 @@
             }
 
             // load recent messages
-            fetch('/api/messages').then(r=>r.json()).then(list => { if(Array.isArray(list)) list.forEach(addMessage) }).catch(()=>{});
+            fetch(`${API_BASE_URL}/api/messages`, { credentials: 'include' }).then(r=>r.json()).then(list => { if(Array.isArray(list)) list.forEach(addMessage) }).catch(()=>{});
 
             // load socket.io client and connect (cookies sent automatically)
             const s = document.createElement('script');
-            s.src = '/socket.io/socket.io.js';
+            s.src = `${API_BASE_URL}/socket.io/socket.io.js`;
             s.onload = () => {
-                const socket = io();
+                const socket = io(API_BASE_URL, { reconnection: true, reconnectionDelay: 1000, reconnectionDelayMax: 5000, reconnectionAttempts: 5 });
                 socket.on('connect', () => console.log('chat socket connected'));
                 socket.on('message', (m) => addMessage(m));
 
@@ -944,13 +951,6 @@
         const isGitHubPages = location.hostname.endsWith('github.io');
 
         async function handleLogin() {
-            if (isGitHubPages) {
-                const err = document.getElementById('login-error');
-                err.innerText = 'Backend is not available on GitHub Pages. Run server locally on port 3000.';
-                err.classList.remove('hidden');
-                return;
-            }
-
             const u = document.getElementById('login-username').value.trim();
             const p = document.getElementById('login-password').value.trim();
             const err = document.getElementById('login-error');
@@ -963,7 +963,7 @@
             }
 
             try {
-                const res = await fetch('/api/login', {
+                const res = await fetch(`${API_BASE_URL}/api/login`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
@@ -983,13 +983,6 @@
         }
 
         async function handleRegister() {
-            if (isGitHubPages) {
-                const err = document.getElementById('register-error');
-                err.innerText = 'Backend is not available on GitHub Pages. Run server locally on port 3000.';
-                err.classList.remove('hidden');
-                return;
-            }
-
             const u = document.getElementById('register-username').value.trim();
             const p = document.getElementById('register-password').value.trim();
             const pc = document.getElementById('register-confirm').value.trim();
@@ -1012,7 +1005,7 @@
             }
 
             try {
-                const res = await fetch('/api/register', {
+                const res = await fetch(`${API_BASE_URL}/api/register`, {
                     method: 'POST',
                     credentials: 'include',
                     headers: { 'Content-Type': 'application/json' },
@@ -1032,7 +1025,7 @@
         }
 
         function handleLogout() {
-            fetch('/api/logout', { method: 'POST', credentials: 'include' }).catch(() => {});
+            fetch(`${API_BASE_URL}/api/logout`, { method: 'POST', credentials: 'include' }).catch(() => {});
             location.reload();
         }
 
@@ -1118,7 +1111,7 @@
         // =================================================================
         async function checkExistingSession() {
             try {
-                const res = await fetch('/api/me', { credentials: 'include' });
+                const res = await fetch(`${API_BASE_URL}/api/me`, { credentials: 'include' });
                 const j = await res.json();
                 if (j.user) {
                     // User is logged in
@@ -1131,15 +1124,17 @@
             }
         }
 
-        // If on GitHub Pages, disable backend features
+        // If on GitHub Pages, add backend URL info
         if (location.hostname.endsWith('github.io')) {
-            document.getElementById('chat-input').disabled = true;
-            document.getElementById('chat-send').disabled = true;
-            const notice = document.createElement('div');
-            notice.className = 'p-3 text-sm text-yellow-300 bg-yellow-900/10 border border-yellow-800/20 rounded-md mb-3';
-            notice.innerText = 'Note: Chat is disabled on GitHub Pages. This is a static deployment.';
-            const chatView = document.getElementById('view-chat');
-            if (chatView) chatView.insertBefore(notice, chatView.firstChild);
+            window.addEventListener('load', () => {
+                const chatView = document.getElementById('view-chat');
+                if (chatView) {
+                    const notice = document.createElement('div');
+                    notice.className = 'p-3 text-sm text-blue-300 bg-blue-900/10 border border-blue-800/20 rounded-md mb-3';
+                    notice.innerText = `Backend: ${API_BASE_URL}`;
+                    chatView.insertBefore(notice, chatView.firstChild);
+                }
+            });
         }
 
         // =================================================================

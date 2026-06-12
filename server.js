@@ -44,7 +44,23 @@ db.serialize(() => {
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(cors({ origin: true, credentials: true }));
+// CORS: Allow GitHub Pages and localhost
+const allowedOrigins = [
+  'https://noonemhvs.github.io',
+  'http://localhost:3000',
+  'http://localhost:5000',
+  'file://'
+];
+app.use(cors({
+  origin: (origin, callback) => {
+    if (!origin || allowedOrigins.some(o => origin.startsWith(o))) {
+      callback(null, true);
+    } else {
+      callback(new Error('CORS not allowed'));
+    }
+  },
+  credentials: true
+}));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname)));
 
@@ -75,7 +91,7 @@ app.post('/api/register', async (req, res) => {
     if (err) return res.status(400).json({ error: 'User exists or DB error' });
     const user = { id: this.lastID, username };
     const token = generateToken(user);
-    res.cookie('token', token, { httpOnly: true });
+    res.cookie('token', token, { httpOnly: true, sameSite: 'none', secure: true });
     res.json({ user, token });
   });
 });
@@ -90,7 +106,7 @@ app.post('/api/login', (req, res) => {
     if (!ok) return res.status(400).json({ error: 'Invalid credentials' });
     const user = { id: row.id, username: row.username };
     const token = generateToken(user);
-    res.cookie('token', token, { httpOnly: true });
+    res.cookie('token', token, { httpOnly: true, sameSite: 'none', secure: true });
     res.json({ user, token });
   });
 });
