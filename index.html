@@ -57,6 +57,26 @@
         <canvas id="snow-canvas"></canvas>
 
         <div class="p-6 pb-2 relative z-10">
+            <!-- Auth Box -->
+            <div id="auth-box" class="mb-4 text-sm text-left">
+                <div id="auth-logged-out" class="">
+                    <button onclick="showAuthForm(true)" class="w-full mb-2 px-3 py-2 bg-blue-600 text-white rounded-lg">Login / Register</button>
+                </div>
+                <div id="auth-logged-in" class="hidden">
+                    <div class="text-blue-200 font-semibold" id="auth-username">User</div>
+                    <button onclick="logout()" class="mt-2 w-full px-3 py-2 bg-red-600 text-white rounded-lg">Logout</button>
+                </div>
+                <div id="auth-form" class="hidden mt-2 bg-[#071127] p-3 rounded-lg border border-blue-800/30">
+                    <input id="auth-username-input" placeholder="Username" class="w-full mb-2 px-2 py-1 rounded bg-[#0f172a]" />
+                    <input id="auth-password-input" type="password" placeholder="Password" class="w-full mb-2 px-2 py-1 rounded bg-[#0f172a]" />
+                    <div class="flex gap-2">
+                        <button onclick="login()" class="flex-1 px-2 py-1 bg-blue-600 rounded">Login</button>
+                        <button onclick="registerUser()" class="flex-1 px-2 py-1 bg-green-600 rounded">Register</button>
+                        <button onclick="showAuthForm(false)" class="px-2 py-1 bg-gray-700 rounded">Close</button>
+                    </div>
+                    <div id="auth-msg" class="text-xs mt-2 text-red-400"></div>
+                </div>
+            </div>
         <nav class="flex-1 px-4 py-8 space-y-3 relative z-10 overflow-y-auto">
             <button onclick="switchTab('play')" id="tab-play" class="w-full flex items-center gap-3 px-4 py-3 rounded-xl bg-blue-600 text-white font-semibold transition-all duration-300 shadow-[0_4px_20px_rgba(37,99,235,0.4)] hover:bg-blue-500 hover:scale-[1.02]">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
@@ -313,8 +333,8 @@
             
             <!-- Chat Input Area -->
             <div class="bg-blue-900/40 border-x border-b border-blue-500/20 rounded-b-2xl p-3 flex gap-2 backdrop-blur-sm">
-                <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-xl px-4 py-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all text-sm placeholder-blue-600/50" onkeypress="if(event.key === 'Enter') sendChatMessage()">
-                <button onclick="sendChatMessage()" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95 flex items-center gap-2">
+                <input type="text" id="chat-input" placeholder="Type a message..." class="flex-1 bg-[#0f172a] border border-blue-700/50 text-blue-100 rounded-xl px-4 py-3 outline-none focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-all text-sm placeholder-blue-600/50">
+                <button id="chat-send" class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2 rounded-xl text-sm font-semibold transition-all shadow-md active:scale-95 flex items-center gap-2">
                     Send
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"></path></svg>
                 </button>
@@ -343,6 +363,22 @@
     </main>
 
     <script>
+        // If served from GitHub Pages, backend features (chat/auth) are unavailable.
+        if (location.hostname.endsWith('github.io')) {
+            // Disable chat input and show notice
+            window.addEventListener('load', () => {
+                const chatInput = document.getElementById('chat-input');
+                const chatSend = document.getElementById('chat-send');
+                if (chatInput) { chatInput.disabled = true; chatInput.placeholder = 'Chat disabled on GitHub Pages.' }
+                if (chatSend) chatSend.disabled = true;
+
+                const notice = document.createElement('div');
+                notice.className = 'p-3 text-sm text-yellow-300 bg-yellow-900/10 border border-yellow-800/20 rounded-md mb-3';
+                notice.innerText = 'Poznámka: Chat a přihlášení nejsou dostupné na GitHub Pages. Backend hostujte jinde (Render/Railway) pro plnou funkčnost.';
+                const chatView = document.getElementById('view-chat');
+                if (chatView) chatView.insertBefore(notice, chatView.firstChild);
+            });
+        }
         // --- Tab Navigation Logic ---
         function switchTab(tabId) {
             // Hide all views
@@ -393,37 +429,107 @@
             }, 2000);
         }
 
-        // --- Chat Logic ---
-        function sendChatMessage() {
-            const input = document.getElementById('chat-input');
-            const message = input.value.trim();
-            if(!message) return;
-            
-            const chatContainer = document.getElementById('chat-messages');
-            
-            const msgDiv = document.createElement('div');
-            msgDiv.className = 'flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]';
-            msgDiv.innerHTML = `
-                <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center font-bold text-sm shadow-md text-white">Y</div>
-                <div>
-                    <div class="flex items-baseline gap-2">
-                        <span class="font-bold text-green-200 text-sm">You</span>
-                        <span class="text-[10px] text-blue-400/60">Just now</span>
+        // --- Chat + Auth Client Logic ---
+        (function(){
+            function escapeHTML(str) {
+                return String(str).replace(/[&<>'"]/g, tag => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'}[tag]));
+            }
+
+            function addMessage(message) {
+                const chatContainer = document.getElementById('chat-messages');
+                const msgDiv = document.createElement('div');
+                msgDiv.className = 'flex items-start gap-3 animate-[fadeIn_0.3s_ease-out]';
+                msgDiv.innerHTML = `
+                    <div class="w-8 h-8 rounded-lg bg-gradient-to-br from-green-500 to-emerald-700 flex items-center justify-center font-bold text-sm shadow-md text-white">${escapeHTML((message.username||'G').charAt(0)||'G')}</div>
+                    <div>
+                        <div class="flex items-baseline gap-2">
+                            <span class="font-bold text-green-200 text-sm">${escapeHTML(message.username || 'Guest')}</span>
+                            <span class="text-[10px] text-blue-400/60">${new Date(message.created_at||Date.now()).toLocaleTimeString()}</span>
+                        </div>
+                        <p class="text-blue-100 text-sm mt-0.5 bg-blue-800/50 p-2 rounded-r-lg rounded-bl-lg border border-blue-500/20">${escapeHTML(message.text)}</p>
                     </div>
-                    <p class="text-blue-100 text-sm mt-0.5 bg-blue-800/50 p-2 rounded-r-lg rounded-bl-lg border border-blue-500/20">${escapeHTML(message)}</p>
-                </div>
-            `;
-            
-            chatContainer.appendChild(msgDiv);
-            chatContainer.scrollTop = chatContainer.scrollHeight;
-            input.value = '';
-        }
-        
-        function escapeHTML(str) {
-            return str.replace(/[&<>'"]/g, tag => ({
-                '&': '&amp;', '<': '&lt;', '>': '&gt;', "'": '&#39;', '"': '&quot;'
-            }[tag]));
-        }
+                `;
+                chatContainer.appendChild(msgDiv);
+                chatContainer.scrollTop = chatContainer.scrollHeight;
+            }
+
+            // load recent messages
+            fetch('/api/messages').then(r=>r.json()).then(list => { if(Array.isArray(list)) list.forEach(addMessage) }).catch(()=>{});
+
+            // load socket.io client and connect (cookies sent automatically)
+            const s = document.createElement('script');
+            s.src = '/socket.io/socket.io.js';
+            s.onload = () => {
+                const socket = io();
+                socket.on('connect', () => console.log('chat socket connected'));
+                socket.on('message', (m) => addMessage(m));
+
+                const sendBtn = document.getElementById('chat-send');
+                const input = document.getElementById('chat-input');
+                sendBtn.addEventListener('click', send);
+                input.addEventListener('keypress', (e)=>{ if(e.key==='Enter') send(); });
+
+                function send(){
+                    const text = input.value.trim();
+                    if(!text) return;
+                    socket.emit('message', text);
+                    input.value = '';
+                }
+            };
+            document.head.appendChild(s);
+
+            // Auth helpers
+            window.showAuthForm = function(show){
+                document.getElementById('auth-form').classList.toggle('hidden', !show);
+            }
+
+            window.registerUser = async function(){
+                const u = document.getElementById('auth-username-input').value;
+                const p = document.getElementById('auth-password-input').value;
+                const msg = document.getElementById('auth-msg');
+                msg.innerText = '';
+                try{
+                    const res = await fetch('/api/register', { method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p }) });
+                    const j = await res.json();
+                    if(!res.ok) throw new Error(j.error || 'Register failed');
+                    updateAuthUI(j.user);
+                    showAuthForm(false);
+                }catch(e){ msg.innerText = e.message }
+            }
+
+            window.login = async function(){
+                const u = document.getElementById('auth-username-input').value;
+                const p = document.getElementById('auth-password-input').value;
+                const msg = document.getElementById('auth-msg');
+                msg.innerText = '';
+                try{
+                    const res = await fetch('/api/login', { method: 'POST', credentials: 'include', headers: {'Content-Type':'application/json'}, body: JSON.stringify({ username: u, password: p }) });
+                    const j = await res.json();
+                    if(!res.ok) throw new Error(j.error || 'Login failed');
+                    updateAuthUI(j.user);
+                    showAuthForm(false);
+                }catch(e){ msg.innerText = e.message }
+            }
+
+            window.logout = async function(){
+                await fetch('/api/logout', { method: 'POST', credentials: 'include' });
+                updateAuthUI(null);
+            }
+
+            function updateAuthUI(user){
+                if(user){
+                    document.getElementById('auth-username').innerText = user.username;
+                    document.getElementById('auth-logged-in').classList.remove('hidden');
+                    document.getElementById('auth-logged-out').classList.add('hidden');
+                } else {
+                    document.getElementById('auth-logged-in').classList.add('hidden');
+                    document.getElementById('auth-logged-out').classList.remove('hidden');
+                }
+            }
+
+            // check current user
+            fetch('/api/me', { credentials: 'include' }).then(r=>r.json()).then(j=>{ if(j.user) updateAuthUI(j.user); }).catch(()=>{});
+        })();
 
         // --- Fullscreen Logic ---
         function toggleFullscreen() {
