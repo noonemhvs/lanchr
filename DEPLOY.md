@@ -8,126 +8,129 @@ The frontend automatically deploys to GitHub Pages on every push to `main` via G
 
 ---
 
-## Backend Deployment to Render
+## Backend Deployment to Fly.io ⭐ RECOMMENDED
 
-### Quick Setup (Recommended)
+### Setup (First Time Only)
 
-1. **Sign up to Render**
-   - Go to https://render.com
-   - Click "Sign up with GitHub"
-   - Authorize the app
-
-2. **Deploy Backend**
-   - Click **"New +"** → **"Web Service"**
-   - Select the `noonemhvs/lanchr` repository
-   - Render will auto-detect `render.yaml` and deploy
-   - Wait ~2-3 minutes for deployment to complete
-
-3. **Get Backend URL**
-   - Go to Dashboard → Your service
-   - Copy the URL (e.g., `https://lanchr-backend-xxxxx.onrender.com`)
-
-4. **Update Frontend**
-   - Open `index.html`
-   - Find line ~3: `const API_BASE_URL = isGitHubPages ? '...'`
-   - Replace the Render URL with your actual URL:
-   ```javascript
-   const API_BASE_URL = isGitHubPages 
-       ? 'https://lanchr-backend-xxxxx.onrender.com'
-       : 'http://localhost:3000';
-   ```
-
-5. **Commit & Push**
+1. **Install flyctl**
    ```bash
-   git add index.html
-   git commit -m "Update backend URL to Render deployment"
-   git push origin main
+   curl -L https://fly.io/install.sh | sh
    ```
+   Or download from: https://fly.io/docs/hands-on/install-flyctl/
 
-GitHub Pages will update automatically within 1 minute.
+2. **Login to Fly.io**
+   ```bash
+   flyctl auth login
+   ```
+   This opens your browser to create a free account (GitHub signup works)
+
+### Deploy Backend
+
+```bash
+cd /workspaces/lanchr
+flyctl deploy
+```
+
+Wait 1-2 minutes for deployment to complete.
+
+### Get Your Backend URL
+
+After deployment:
+```bash
+flyctl info --json | jq -r '.appUrl'
+```
+
+Or check Fly.io dashboard: https://fly.io/dashboard
+
+It will be: `https://lanchr-backend-xxxxx.fly.dev`
+
+### Update Frontend with Backend URL
+
+1. Edit `index.html` (line ~3)
+2. Replace:
+```javascript
+const API_BASE_URL = isGitHubPages 
+    ? 'https://supreme-system-69w94pg7g6v2rvj7-3000.preview.app.github.dev'
+    : 'http://localhost:3000';
+```
+
+With your Fly.io URL:
+```javascript
+const API_BASE_URL = isGitHubPages 
+    ? 'https://lanchr-backend-xxxxx.fly.dev'  // ← Your Fly.io URL
+    : 'http://localhost:3000';
+```
+
+3. Push:
+```bash
+git add index.html
+git commit -m "Update backend URL to Fly.io deployment"
+git push origin main
+```
+
+GitHub Pages auto-updates in ~1 minute. ✅
 
 ---
 
 ## Local Testing
-
-Run the backend locally to test before deployment:
 
 ```bash
 npm install
 npm start
 ```
 
-Open `http://localhost:3000` in your browser.
-
-**Test Credentials:**
-- Register a new account or use any username/password
-- Accounts are stored in `./data/db.sqlite`
-
----
-
-## Architecture
-
-```
-┌─────────────────────────────────────┐
-│  GitHub Pages (Static Frontend)     │
-│  https://noonemhvs.github.io/lanchr │
-└────────────────┬────────────────────┘
-                 │ HTTPS Requests
-                 ↓
-┌─────────────────────────────────────┐
-│  Render Backend (Express + Socket.IO)│
-│  https://lanchr-backend-xxxxx...    │
-├─────────────────────────────────────┤
-│ • JWT Authentication (httpOnly)     │
-│ • SQLite Database                   │
-│ • WebSocket Chat (Socket.IO)        │
-└─────────────────────────────────────┘
-```
+Then open `http://localhost:3000`
 
 ---
 
 ## Features
 
-- ✅ **Authentication** - Register/Login with JWT tokens
-- ✅ **Chat** - Real-time messaging via Socket.IO
-- ✅ **Server List** - Browse Eaglercraft servers
-- ✅ **File Injection** - Inject mods into clients
-- ✅ **Settings** - Theme customization
-- ✅ **CORS** - Cross-origin requests from GitHub Pages
+- ✅ Authentication (JWT + httpOnly cookies)
+- ✅ Real-time Chat (Socket.IO)
+- ✅ Server List
+- ✅ File Injection
+- ✅ Settings & Themes
+- ✅ CORS for GitHub Pages
 
 ---
 
 ## Troubleshooting
 
-### "Backend is not available" error
-**Solution:** 
-- Check backend URL in `index.html` is correct
-- Wait 2-3 minutes after Render deployment completes
-- Verify Render service is running (green status)
+**Backend not available:**
+- Check `API_BASE_URL` in index.html
+- Verify Fly.io app running: `flyctl status`
+- Wait 2-3 minutes after deploy
 
-### Login/Register returns 5xx error
-**Solution:**
-- Check Render logs: Dashboard → Service → Logs
-- Verify `JWT_SECRET` is set (auto-generated)
-- Restart service if needed
+**Login errors:**
+- Check logs: `flyctl logs`
+- Verify secrets: `flyctl secrets list`
+- Restart: `flyctl restart`
 
-### Chat not connecting
-**Solution:**
-- Check WebSocket connection in DevTools (Network tab)
+**Chat not connecting:**
+- Check WebSocket in DevTools
 - Verify backend is running
-- Check CORS headers are being sent
+- Check CORS headers: `flyctl logs`
 
-### Cookies not working
-**Solution:**
-- Backend sets `sameSite: 'none', secure: true`
-- Frontend sends `credentials: 'include'` in fetch
-- Only works over HTTPS (GitHub Pages is HTTPS)
+---
+
+## Fly.io Commands
+
+```bash
+flyctl status          # Check status
+flyctl logs            # View logs
+flyctl secrets list    # View environment variables
+flyctl restart         # Restart app
+flyctl ssh console     # Connect to container
+```
+
+Dashboard: https://fly.io/dashboard
 
 ---
 
 ## Notes
 
-- **Render Free Tier:** Service sleeps after 15 min inactivity (first request takes ~30s to wake)
-- **Database:** SQLite stores users and messages in `/opt/render/project/data/db.sqlite`
-- **Cold Starts:** Allow 30-60 seconds on first request after sleep
-- **Scaling:** Upgrade to paid plan to remove sleep and get better performance
+- No cold starts (always running)
+- Data persists automatically
+- HTTPS included
+- Free tier includes 3 apps + 3GB storage
+- Recommended over Render
