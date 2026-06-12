@@ -396,7 +396,7 @@
         // Detect if running on GitHub Pages or locally
         const isGitHubPages = location.hostname.endsWith('github.io');
         const API_BASE_URL = isGitHubPages 
-            ? 'https://supreme-system-69w94pg7g6v2rvj7-3000.preview.app.github.dev'  // Codespace backend
+            ? 'https://lanchr-backend.fly.dev'  // Production backend on Fly.io
             : 'http://localhost:3000';  // Local testing
 
         // If served from GitHub Pages, backend features (chat/auth) are unavailable until backend is deployed.
