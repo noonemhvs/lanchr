@@ -396,8 +396,8 @@
         // Detect if running on GitHub Pages or locally
         const isGitHubPages = location.hostname.endsWith('github.io');
         const API_BASE_URL = isGitHubPages 
-            ? 'https://lanchr-backend.onrender.com'  // Will be set after deployment
-            : 'http://localhost:3000';
+            ? 'https://supreme-system-69w94pg7g6v2rvj7-3000.preview.app.github.dev'  // Codespace backend
+            : 'http://localhost:3000';  // Local testing
 
         // If served from GitHub Pages, backend features (chat/auth) are unavailable until backend is deployed.
         if (location.hostname.endsWith('github.io')) {

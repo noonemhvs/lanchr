@@ -12,7 +12,19 @@ const sqlite3 = require('sqlite3').verbose();
 
 const app = express();
 const server = http.createServer(app);
-const io = new Server(server, { cors: { origin: true } });
+const io = new Server(server, {
+  cors: {
+    origin: (origin, callback) => {
+      // Allow GitHub Pages, localhost, and any origin during development
+      if (!origin || origin.includes('localhost') || origin.includes('github.io') || origin.includes('codespace')) {
+        callback(null, true);
+      } else {
+        callback(null, true); // Allow for now, restrict later
+      }
+    },
+    credentials: true
+  }
+});
 
 const PORT = process.env.PORT || 3000;
 const JWT_SECRET = process.env.JWT_SECRET || 'dev_secret_replace_me';
